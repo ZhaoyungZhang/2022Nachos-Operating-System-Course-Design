@@ -29,6 +29,7 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+    hdrSector=sector;   //打开文件的文件头所在的扇区号
 }
 
 //----------------------------------------------------------------------
@@ -71,9 +72,14 @@ OpenFile::Seek(int position)
 int
 OpenFile::Read(char *into, int numBytes)
 {
-   int result = ReadAt(into, numBytes, seekPosition);
-   seekPosition += result;
-   return result;
+    int result;
+#ifdef FILESYS
+    result = ReadAt(into,numBytes,0);
+#else
+    result = ReadAt(into, numBytes, seekPosition);
+    seekPosition += result;
+#endif
+    return result;
 }
 
 int
@@ -147,11 +153,27 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
-
-    if ((numBytes <= 0) || (position >= fileLength))
-	return 0;				// check request
-    if ((position + numBytes) > fileLength)
-	numBytes = fileLength - position;
+    
+    // if ((numBytes <= 0) || (position >= fileLength))
+	//     return 0;				// check request
+    // 修改之后
+    // 不符合条件的 不写入 或者 开始位置已经超过文件长度 都是异常行为
+    if ((numBytes <= 0) || (position > fileLength))
+	    return 0;
+    // 剩下可能是开始位置在文件末尾或者在中间
+    // 需要写到其他扇区
+    if ((position + numBytes) > fileLength){
+        // 写在其他扇区的字节数 
+	    int incrementBytes = position + numBytes - fileLength;
+        BitMap *freeBitMap = fileSystem->getBitMap(); // 找空闲bitmap
+        // 分配Bitmap
+        bool hdrRet = hdr->Allocate(freeBitMap,fileLength,incrementBytes);
+        // 
+        if(!hdrRet)
+            // 分配失败 没有足够的磁盘空间 或者 文件太大了
+            return -1;
+        fileSystem->setBitMap(freeBitMap);
+    }
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	
 			numBytes, position, fileLength);
 
@@ -192,3 +214,27 @@ OpenFile::Length()
 { 
     return hdr->FileLength(); 
 }
+
+//----------------------------------------------------------------------
+// OpenFile::WriteBack
+// 	把文件头写回磁盘
+//----------------------------------------------------------------------
+
+void
+OpenFile::WriteBack() 
+{ 
+    hdr-> WriteBack(hdrSector);
+}
+
+#ifdef FILESYS
+int OpenFile::WriteStdout(char* from,int numBytes){
+    int file = 1;
+    WriteFile(file,from,numBytes);
+    return numBytes;
+}
+int OpenFile::ReadStdin(char *into,int numBytes){
+    int file = 0;
+    return ReadPartial(file,into,numBytes);
+}
+
+#endif

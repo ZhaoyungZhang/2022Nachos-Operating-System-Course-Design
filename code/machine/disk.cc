@@ -16,6 +16,7 @@
 #include "copyright.h"
 #include "disk.h"
 #include "system.h"
+#include "stdlib.h"
 
 // We put this at the front of the UNIX file representing the
 // disk, to make it less likely we will accidentally treat a useful file 

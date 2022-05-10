@@ -1,6 +1,7 @@
-arch/unknown-i386-linux/depends/synchtest.d arch/unknown-i386-linux/objects/synchtest.o: ../threads/synchtest.cc ../threads/copyright.h \
- ../threads/system.h ../threads/utility.h ../threads/bool.h \
- ../machine/sysdep.h ../threads/copyright.h ../threads/thread.h \
- ../threads/scheduler.h ../threads/list.h ../machine/interrupt.h \
- ../threads/list.h ../machine/stats.h ../machine/timer.h \
- ../threads/utility.h ../threads/synch.h
+arch/unknown-i386-linux/depends/synchtest.d arch/unknown-i386-linux/objects/synchtest.o: synchtest.cc ../lab7-8/copyright.h ../lab7-8/system.h \
+ ../lab7-8/utility.h ../machine/sysdep.h ../lab7-8/thread.h \
+ ../machine/machine.h ../machine/translate.h ../machine/disk.h \
+ ../lab7-8/addrspace.h ../lab7-8/filesys.h ../lab7-8/openfile.h \
+ ../lab7-8/bitmap.h ../lab7-8/scheduler.h ../lab7-8/list.h \
+ ../machine/interrupt.h ../machine/stats.h ../machine/timer.h \
+ ../lab7-8/synch.h

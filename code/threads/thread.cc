@@ -34,7 +34,9 @@
 
 Thread::Thread(char* threadName)
 {
-    name = threadName;
+    // name = threadName;
+    name = new char[50];
+    strcpy(name,threadName);
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
@@ -94,6 +96,7 @@ Thread::Fork(VoidFunctionPtr func, _int arg)
     DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
 	  name, (int) func, arg);
 #endif
+    // printf("Forking thread \"%s\" with func = 0x%x, arg = %d\n",name, (int) func, arg);
     
     StackAllocate(func, arg);
 
@@ -148,14 +151,30 @@ Thread::CheckOverflow()
 void
 Thread::Finish ()
 {
-    (void) interrupt->SetLevel(IntOff);		
+    (void) interrupt->SetLevel(IntOff);	// off	
     ASSERT(this == currentThread);
-    
+#ifdef USER_PROGRAM
+    List* waitingList = scheduler->getWaitingList();
+    ListElement *p = waitingList->getFirstElement();
+    // joinee finish and wake up joiner 
+    while(p!=NULL){
+        Thread *waitingThread = (Thread *)p->item;
+        if(waitingThread->waitProcessSpaceId == currentThread->userProgramId()){
+            waitingThread->setWaitExitCode(currentThread->ExitCode());
+            scheduler->ReadyToRun((Thread *)waitingThread);
+            waitingList->RemoveItem(p);
+            break;
+        }
+        p = p->next;
+    }
+    // end joinee process
+    Terminated();
+#else
     DEBUG('t', "Finishing thread \"%s\"\n", getName());
-    
     threadToBeDestroyed = currentThread;
     Sleep();					// invokes SWITCH
     // not reached
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -394,4 +413,53 @@ Thread::RestoreUserState()
     for (int i = 0; i < NumTotalRegs; i++)
 	machine->WriteRegister(i, userRegisters[i]);
 }
+
+void Thread::Join(int SpaceId){
+    // Disable Interrupt
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    // 设置父进程等待的子进程的SpaceId   
+    currentThread->setWaitProcessSpaceId(SpaceId);   
+    // get TerminatedList 
+    List *terminatedList = scheduler->getTerminatedList();
+    // check if joinee in TerminatedList
+    bool interminatedList = FALSE;
+    ListElement *p = terminatedList->getFirstElement();
+    // 在终止队列中查找 Joinee
+    while(p != NULL){
+        Thread *thread = (Thread *)p->item;
+        if(thread->userProgramId() == SpaceId){ // is in List
+            interminatedList = TRUE;            // change Flag
+            currentThread->setWaitExitCode(thread->ExitCode()); // set wait exitcode
+            break;
+        }
+        p = p->next;
+    }
+    // Joinee is not in TerminatedList, 则将 Joiner 放入等待队列中，并进入睡眠等待状态
+    if(!interminatedList){
+        List *waitingList = scheduler->getWaitingList();    
+        waitingList->Append((void *)this); 
+        currentThread->Sleep();     // Block Joiner      
+    }
+    // wake up joiner and 在终止队列中删除 Joinee
+    scheduler->deleteTerminatedThread(SpaceId);
+    (void) interrupt->SetLevel(oldLevel);   // open interrupt
+}
+
+void
+Thread::Terminated(){
+    List *terminatedList = scheduler->getTerminatedList();
+    ASSERT(this == currentThread);
+    ASSERT(interrupt->getLevel() == IntOff);
+
+    // set status as terminated and put in List
+    status = TERMINATED;
+    terminatedList->Append((void *)this);
+    Thread *nextThread = scheduler->FindNextToRun();
+    while(nextThread == NULL){
+        interrupt->Idle();
+        nextThread = scheduler->FindNextToRun();
+    }
+    scheduler->Run(nextThread);
+}
+
 #endif

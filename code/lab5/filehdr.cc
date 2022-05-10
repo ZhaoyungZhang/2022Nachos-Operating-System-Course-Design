@@ -148,3 +148,52 @@ FileHeader::Print()
     }
     delete [] data;
 }
+
+//----------------------------------------------------------------------
+// FileHeader::FileHeader()
+// 	构造函数
+//----------------------------------------------------------------------
+FileHeader:: FileHeader()
+{
+    numBytes=0;      //文件大小
+    numSectors=0;     //文件扇区数
+    for (int i=0;i<NumDirect;i++)  // NumDirect=30：文件最多拥有的扇区数
+      dataSectors[i]=0; //文件扇区索引表
+}
+
+//----------------------------------------------------------------------
+// FileHeader::Allocate
+// 重载，当写入的数据需要分配新的扇区的时候，为其分配
+//----------------------------------------------------------------------
+
+bool 
+FileHeader::Allocate(BitMap *freeMap,int fileSize, int incrementBytes) {
+    // 修改位图文件信息以及文件头的信息，但修改结果均未写入磁盘中
+    if(numSectors > 30) return false;   							// 超出限定大小30个扇区
+    if((fileSize == 0) && (incrementBytes > 0)){ 				    // 在空文件后追加数据
+        if(freeMap->NumClear() < 1) 
+            return false; 			// 空间不足
+        dataSectors[0] = freeMap->Find(); 							// 先分配一个空闲磁盘块，并更新文件头信息
+        numSectors = 1;                                             // 初始化
+        numBytes = 0;
+    }
+    numBytes = fileSize;
+    int offset = numSectors * SectorSize - numBytes;		        // 原文件最后一个扇区块空闲空间
+    int newSectorBytes = incrementBytes-offset; 				    // 需要写到新扇区的数据 = 需要填的数据 - 最后一个扇区块空闲空间
+    // 最后一个扇区的空闲空间足够
+    if(newSectorBytes <= 0){
+        numBytes = numBytes+incrementBytes; 						// 更新文件头中的文件大小
+        return true;
+    }
+    // 最后一个扇区的空闲空间不足
+    int moreSectors = divRoundUp(newSectorBytes,SectorSize);
+    if(numSectors+moreSectors > 30) 
+        return false;   		                                    // 文件过大，超过30个磁盘块
+    if(freeMap->NumClear() < moreSectors) 
+        return false;                                               // 无足够扇区用于分配
+    for(int i = numSectors; i < numSectors+moreSectors; i++) 
+        dataSectors[i] = freeMap->Find();
+    numBytes = numBytes+incrementBytes;     						// 更新文件大小
+    numSectors = numSectors+moreSectors;    						// 更新文件扇区块数
+    return true;
+}

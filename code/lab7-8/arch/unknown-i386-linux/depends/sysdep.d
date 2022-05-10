@@ -1,6 +1,7 @@
-arch/unknown-i386-linux/depends/sysdep.d arch/unknown-i386-linux/objects/sysdep.o: ../machine/sysdep.cc ../threads/copyright.h \
- ../machine/interrupt.h ../threads/list.h ../threads/copyright.h \
- ../threads/utility.h ../threads/bool.h ../machine/sysdep.h \
- ../threads/system.h ../threads/thread.h ../threads/scheduler.h \
- ../threads/list.h ../machine/interrupt.h ../machine/stats.h \
- ../machine/timer.h ../threads/utility.h
+arch/unknown-i386-linux/depends/sysdep.d arch/unknown-i386-linux/objects/sysdep.o: ../machine/sysdep.cc ../lab7-8/copyright.h \
+ ../machine/interrupt.h ../lab7-8/list.h ../lab7-8/utility.h \
+ ../machine/sysdep.h ../lab7-8/system.h ../lab7-8/thread.h \
+ ../machine/machine.h ../machine/translate.h ../machine/disk.h \
+ ../lab7-8/addrspace.h ../lab7-8/filesys.h ../lab7-8/openfile.h \
+ ../lab7-8/bitmap.h ../lab7-8/scheduler.h ../machine/stats.h \
+ ../machine/timer.h

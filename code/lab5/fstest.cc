@@ -88,41 +88,42 @@ Copy(char *from, char *to)
 void
 Append(char *from, char *to, int half)
 {
+    // append 追加到末尾
     FILE *fp;
     OpenFile* openFile;
     int amountRead, fileLength;
     char *buffer;
 
-//  start position for appending
+    //  start position for appending
     int start;
 
-// Open UNIX file
+    // Open UNIX file
     if ((fp = fopen(from, "r")) == NULL) {	 
-	printf("Copy: couldn't open input file %s\n", from);
-	return;
+        printf("Copy: couldn't open input file %s\n", from);
+        return;
     }
 
-// Figure out length of UNIX file
+    // Figure out length of UNIX file
     fseek(fp, 0, 2);		
     fileLength = ftell(fp);
     fseek(fp, 0, 0);
 
     if (fileLength == 0) 
     {
-	printf("Append: nothing to append from file %s\n", from);
-	return;
+        printf("Append: nothing to append from file %s\n", from);
+        return;
     }
 	 
     if ( (openFile = fileSystem->Open(to)) == NULL)
     {
-	// file "to" does not exits, then create one
-	if (!fileSystem->Create(to, 0)) 
-	{
-	    printf("Append: couldn't create the file %s to append\n", to);
-	    fclose(fp);
-	    return;
-	}
-	openFile = fileSystem->Open(to);
+	    // file "to" does not exits, then create one
+        if (!fileSystem->Create(to, 0)) 
+        {
+            printf("Append: couldn't create the file %s to append\n", to);
+            fclose(fp);
+            return;
+        }
+	    openFile = fileSystem->Open(to);
     }
 
     ASSERT(openFile != NULL);
@@ -131,26 +132,31 @@ Append(char *from, char *to, int half)
     if (half) start = start / 2;
     openFile->Seek(start);
     
-// Append the data in TransferSize chunks
+    // Append the data in TransferSize chunks
     buffer = new char[TransferSize];
     while ((amountRead = fread(buffer, sizeof(char), TransferSize, fp)) > 0) 
     {
         int result;
-//	printf("start value: %d,  amountRead %d, ", start, amountRead);
-//	result = openFile->WriteAt(buffer, amountRead, start);
-	result = openFile->Write(buffer, amountRead);
-//	printf("result of write: %d\n", result);
-	ASSERT(result == amountRead);
-//	start += amountRead;
-//	ASSERT(start == openFile->Length());
+        //	printf("start value: %d,  amountRead %d, ", start, amountRead);
+        //	result = openFile->WriteAt(buffer, amountRead, start);
+	    result = openFile->Write(buffer, amountRead);
+        //	printf("result of write: %d\n", result);
+        if(result < 0){								// 数据读取发生错误
+            printf("\nERROR!!!\n");
+            printf("Insuficient Disk Space, or File is too big!\nWriting Terminated!\n");
+            break;
+        }
+	    ASSERT(result == amountRead);
+        //	start += amountRead;
+        //	ASSERT(start == openFile->Length());
     }
     delete [] buffer;
 
-// Write the inode back to the disk, because we have changed it
-// openFile->WriteBack();
-//  printf("inodes have been written back\n");
-    
-// Close the UNIX and the Nachos files
+    // Write the inode back to the disk, because we have changed it
+    openFile->WriteBack();
+    DEBUG('f',"inodes have been written back\n");
+        
+    // Close the UNIX and the Nachos files
     delete openFile;
     fclose(fp);
 }
@@ -221,19 +227,25 @@ NAppend(char *from, char *to)
     while ( (amountRead = openFileFrom->Read(buffer, TransferSize)) > 0) 
     {
         int result;
-//	printf("start value: %d,  amountRead %d, ", start, amountRead);
+    printf("start value: %d,  amountRead %d, ", start, amountRead);
 //	result = openFile->WriteAt(buffer, amountRead, start);
 	result = openFileTo->Write(buffer, amountRead);
-//	printf("result of write: %d\n", result);
+    if(result < 0){
+        printf("\nERROR\n");
+        printf("Insuficient Disk Space, or File is Too Big!\n");
+        printf("Writting Terminated.\n\n");
+        break;
+    }
+    printf("result of write: %d\n", result);
 	ASSERT(result == amountRead);
-//	start += amountRead;
+    start += amountRead;
 //	ASSERT(start == openFile->Length());
     }
     delete [] buffer;
 
 // Write the inode back to the disk, because we have changed it
-// openFileTo->WriteBack();
-// printf("inodes have been written back\n");
+    openFileTo->WriteBack();
+    printf("inodes have been written back\n");
     
 // Close both Nachos files
     delete openFileTo;

@@ -30,6 +30,10 @@
 Scheduler::Scheduler()
 { 
     readyList = new List; 
+#ifdef USER_PROGRAM
+    waitingList = new List;
+    terminatedList = new List;
+#endif
 } 
 
 //----------------------------------------------------------------------
@@ -145,3 +149,20 @@ Scheduler::Print()
     printf("Ready list contents:\n");
     readyList->Mapcar((VoidFunctionPtr) ThreadPrint);
 }
+
+#ifdef USER_PROGRAM
+
+void
+Scheduler::deleteTerminatedThread(int deleteSpaceId){
+    ListElement *first = terminatedList->getFirstElement();
+    while (first != NULL){
+        Thread *thread = (Thread *)first->item;
+        if(thread->userProgramId() == deleteSpaceId){
+            terminatedList->RemoveItem(first);
+            break;
+        }
+        first = first->next;
+    }
+    
+}
+#endif

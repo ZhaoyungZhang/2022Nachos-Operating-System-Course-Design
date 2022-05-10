@@ -61,7 +61,7 @@
 // supports extensible files, the directory size sets the maximum number 
 // of files that can be loaded onto the disk.
 #define FreeMapFileSize 	(NumSectors / BitsInByte)
-#define NumDirEntries 		10
+#define NumDirEntries 		20
 #define DirectoryFileSize 	(sizeof(DirectoryEntry) * NumDirEntries)
 
 //----------------------------------------------------------------------
@@ -83,8 +83,8 @@ FileSystem::FileSystem(bool format)
     if (format) {
         BitMap *freeMap = new BitMap(NumSectors);
         Directory *directory = new Directory(NumDirEntries);
-	FileHeader *mapHdr = new FileHeader;
-	FileHeader *dirHdr = new FileHeader;
+	    FileHeader *mapHdr = new FileHeader;
+	    FileHeader *dirHdr = new FileHeader;
 
         DEBUG('f', "Formatting the file system.\n");
 
@@ -184,10 +184,11 @@ FileSystem::Create(char *name, int initialSize)
 
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(directoryFile);
-
+    printf("Creating file %s, size %d\n", name, initialSize);
     if (directory->Find(name) != -1)
       success = FALSE;			// file is already in directory
     else {	
+        // -1  need to create
         freeMap = new BitMap(NumSectors);
         freeMap->FetchFrom(freeMapFile);
         sector = freeMap->Find();	// find a sector to hold the file header
@@ -232,6 +233,7 @@ FileSystem::Open(char *name)
     int sector;
 
     DEBUG('f', "Opening file %s\n", name);
+    printf("Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
     if (sector >= 0) 		
@@ -339,3 +341,22 @@ FileSystem::Print()
     delete freeMap;
     delete directory;
 } 
+
+//----------------------------------------------------------------------
+// FileSystem::getBitMap
+//      获取空闲块位示图文件
+//----------------------------------------------------------------------
+BitMap* FileSystem::getBitMap(){
+    //numSector: DISK上总扇区数（共有32*32=1024个扇区）
+    BitMap *freeBitMap = new BitMap(NumSectors);  
+    freeBitMap->FetchFrom(freeMapFile);
+    return freeBitMap;
+}
+
+//----------------------------------------------------------------------
+// FileSystem::setBitMap
+//      修改bitmap的状态
+//----------------------------------------------------------------------
+void FileSystem::setBitMap(BitMap* freeMap) {
+   freeMap->WriteBack(freeMapFile);
+}

@@ -14,11 +14,19 @@ define MAKEFILE_USERPROG
 yes
 endef
 
+# ifdef MAKEFILE_FILESYS_LOCAL
+# DEFINES += -DUSER_PROGRAM
+# else
+# DEFINES += -DUSER_PROGRAM -DFILESYS_NEEDED -DFILESYS_STUB
+# endif
+
+
 # If the filesystem assignment is done before userprog, then
 # uncomment the include below
 
 include ../threads/Makefile.local
 # include ../filesys/Makefile.local
+# include ../lab5/Makefile.local
 include ../userprog/Makefile.local
 include ../Makefile.dep
 include ../Makefile.common

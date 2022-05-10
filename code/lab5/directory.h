@@ -36,6 +36,13 @@ class DirectoryEntry {
 					//   FileHeader for this file 
     char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
 					// the trailing '\0'
+
+    int parent;       // 目录节点父节点
+    int leftChild;    // 目录节点的左子树
+    int sibilings;    // 目录节点的右兄弟
+    bool filetype;    // 0文件 1目录
+
+    
 };
 
 // The following class defines a UNIX-like "directory".  Each entry in

@@ -108,6 +108,7 @@ Directory::FindIndex(char *name)
 int
 Directory::Find(char *name)
 {
+    printf("This is in FInd now\n");
     int i = FindIndex(name);
 
     if (i != -1)

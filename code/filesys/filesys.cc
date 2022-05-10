@@ -339,3 +339,22 @@ FileSystem::Print()
     delete freeMap;
     delete directory;
 } 
+
+//----------------------------------------------------------------------
+// FileSystem::getBitMap
+//      获取空闲块位示图文件
+//----------------------------------------------------------------------
+BitMap* FileSystem::getBitMap(){
+    //numSector: DISK上总扇区数（共有32*32=1024个扇区）
+    BitMap *freeBitMap = new BitMap(NumSectors);  
+    freeBitMap->FetchFrom(freeMapFile);
+    return freeBitMap;
+}
+
+//----------------------------------------------------------------------
+// FileSystem::setBitMap
+//      修改bitmap的状态
+//----------------------------------------------------------------------
+void FileSystem::setBitMap(BitMap* freeMap) {
+   freeMap->WriteBack(freeMapFile);
+}

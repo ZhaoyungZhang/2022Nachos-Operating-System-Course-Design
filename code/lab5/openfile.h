@@ -85,6 +85,14 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek back 
+	
+	void WriteBack();		// 文件头被修改之后写回对应的扇区
+
+	// OpenFile 
+	OpenFile(char* type){}
+	// Std I/O 
+	int WriteStdout(char* from,int numBytes);
+	int ReadStdin(char *into,int numBytes);
     
   private:
     FileHeader *hdr;			// Header for this file 

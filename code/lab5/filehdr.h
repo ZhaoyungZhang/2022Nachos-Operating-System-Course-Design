@@ -37,6 +37,11 @@
 
 class FileHeader {
   public:
+
+    FileHeader();   // 构造函数
+
+    bool Allocate(BitMap *bitMap, int fileSize,int incrementBytes);
+    
     bool Allocate(BitMap *bitMap, int fileSize);// Initialize a file header, 
 						//  including allocating space 
 						//  on disk for the file data
