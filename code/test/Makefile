@@ -50,7 +50,7 @@ LD = $(GCCDIR)ld
 #        corresponding .o with start.o.  If you want to have more than
 #        one .c file per target, you will have to change stuff below.
 
-targets = halt shell matmult sort exec join exit yield test1 testfilestub filetest
+targets = halt shell matmult sort exec join exit yield test1 testfilestub filetest echo touch
 
 # Targest are put in the architecture specific 'bin' dir.
 
